@@ -1,0 +1,45 @@
+# Data Science Project Example
+# Demonstrates taskx for ML/data workflows
+
+[project]
+name = "data-science-example"
+version = "0.1.0"
+
+[tool.taskx.env]
+DATA_DIR = "data"
+MODEL_DIR = "models"
+NOTEBOOK_DIR = "notebooks"
+
+[tool.taskx.tasks]
+# Data preparation
+download-data = { cmd = "python scripts/download_data.py --output ${DATA_DIR}", description = "Download raw datasets" }
+preprocess = { depends = ["download-data"], cmd = "python scripts/preprocess.py --input ${DATA_DIR}/raw --output ${DATA_DIR}/processed", description = "Preprocess and clean data" }
+validate-data = { depends = ["preprocess"], cmd = "python scripts/validate_data.py --data ${DATA_DIR}/processed", description = "Validate data quality" }
+
+# Feature engineering
+features = { depends = ["validate-data"], cmd = "python scripts/feature_engineering.py --data ${DATA_DIR}/processed --output ${DATA_DIR}/features", description = "Generate features" }
+
+# Model training
+train = { depends = ["features"], cmd = "python scripts/train_model.py --features ${DATA_DIR}/features --output ${MODEL_DIR}", description = "Train machine learning model" }
+train-gpu = { depends = ["features"], cmd = "CUDA_VISIBLE_DEVICES=0 python scripts/train_model.py --features ${DATA_DIR}/features --output ${MODEL_DIR} --gpu", description = "Train model on GPU" }
+
+# Model evaluation
+evaluate = { depends = ["train"], cmd = "python scripts/evaluate.py --model ${MODEL_DIR}/latest --data ${DATA_DIR}/test", description = "Evaluate model performance" }
+
+# Hyperparameter tuning (parallel trials)
+tune = { parallel = ["python scripts/train_model.py --lr 0.001 --name trial1", "python scripts/train_model.py --lr 0.01 --name trial2", "python scripts/train_model.py --lr 0.1 --name trial3"], description = "Run parallel hyperparameter tuning" }
+
+# Jupyter notebooks
+notebook = { cmd = "jupyter lab --notebook-dir=${NOTEBOOK_DIR}", description = "Start Jupyter Lab" }
+notebook-convert = { cmd = "jupyter nbconvert --to python ${NOTEBOOK_DIR}/*.ipynb --output-dir=scripts/", description = "Convert notebooks to Python scripts" }
+
+# Complete pipeline
+pipeline = { depends = ["download-data", "preprocess", "validate-data", "features", "train", "evaluate"], cmd = "python scripts/generate_report.py --model ${MODEL_DIR}/latest", description = "Run complete ML pipeline" }
+
+# Monitoring and tracking
+track = { cmd = "mlflow ui --host 0.0.0.0 --port 5000", description = "Start MLflow tracking UI" }
+
+# Clean up
+clean-data = { cmd = "rm -rf ${DATA_DIR}/processed ${DATA_DIR}/features", description = "Clean processed data" }
+clean-models = { cmd = "rm -rf ${MODEL_DIR}/*", description = "Clean trained models" }
+clean-all = { parallel = ["rm -rf ${DATA_DIR}/processed ${DATA_DIR}/features", "rm -rf ${MODEL_DIR}/*"], description = "Clean all generated artifacts" }

@@ -1,0 +1,31 @@
+# Simple Python Project Example
+# Demonstrates basic taskx usage
+
+[project]
+name = "simple-example"
+version = "0.1.0"
+
+[tool.taskx.env]
+PYTHON = "python3"
+TEST_PATH = "tests/"
+
+[tool.taskx.tasks]
+# Development tasks
+format = { cmd = "black src/ tests/", description = "Format code with black" }
+lint = { cmd = "ruff check src/ tests/", description = "Lint code with ruff" }
+typecheck = { cmd = "mypy src/", description = "Type check with mypy" }
+
+# Testing tasks
+test = { cmd = "pytest ${TEST_PATH} -v", description = "Run tests" }
+test-cov = { cmd = "pytest ${TEST_PATH} --cov=src --cov-report=html", description = "Run tests with coverage" }
+
+# Quality gate - run all checks in parallel
+check = { parallel = ["black --check src/ tests/", "ruff check src/ tests/", "mypy src/", "pytest tests/ -q"], description = "Run all quality checks in parallel" }
+
+# Build and publish
+clean = { cmd = "rm -rf dist build *.egg-info", description = "Clean build artifacts" }
+build = { depends = ["check"], cmd = "python -m build", description = "Build package" }
+publish-test = { depends = ["build"], cmd = "twine upload --repository testpypi dist/*", description = "Publish to TestPyPI" }
+
+# Watch mode for development
+dev = { cmd = "pytest tests/ -v", watch = ["src/**/*.py", "tests/**/*.py"], description = "Run tests on file changes" }

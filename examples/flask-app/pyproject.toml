@@ -1,0 +1,41 @@
+# Flask Web Application Example
+# Demonstrates taskx for web development
+
+[project]
+name = "flask-app-example"
+version = "0.1.0"
+
+[tool.taskx.env]
+FLASK_APP = "app.py"
+FLASK_ENV = "development"
+PORT = "5000"
+
+[tool.taskx.tasks]
+# Development server
+dev = { cmd = "flask run --host=0.0.0.0 --port=${PORT}", watch = ["*.py", "templates/**/*", "static/**/*"], description = "Run development server with auto-reload" }
+
+# Database tasks
+db-init = { cmd = "flask db init", description = "Initialize database migrations" }
+db-migrate = { cmd = "flask db migrate -m \"${MESSAGE}\"", description = "Create migration" }
+db-upgrade = { cmd = "flask db upgrade", description = "Apply migrations" }
+db-reset = { cmd = "flask db downgrade base && flask db upgrade", description = "Reset database to latest migration" }
+
+# Testing
+test = { cmd = "pytest tests/ -v", description = "Run tests" }
+test-watch = { cmd = "pytest tests/ -v", watch = ["app/**/*.py", "tests/**/*.py"], description = "Run tests on file changes" }
+
+# Code quality
+lint = { cmd = "ruff check app/ tests/", description = "Lint code" }
+format = { cmd = "black app/ tests/", description = "Format code" }
+security = { cmd = "bandit -r app/", description = "Security scan" }
+
+# Build for production
+build = { parallel = ["black --check app/ tests/", "ruff check app/ tests/", "pytest tests/ -q"], description = "Build checks before deployment" }
+
+# Docker tasks
+docker-build = { cmd = "docker build -t flask-app .", description = "Build Docker image" }
+docker-run = { depends = ["docker-build"], cmd = "docker run -p ${PORT}:${PORT} -e FLASK_ENV=production flask-app", description = "Run in Docker container" }
+
+# Deployment
+deploy-staging = { depends = ["build"], cmd = "sh scripts/deploy-staging.sh", description = "Deploy to staging environment" }
+deploy-prod = { depends = ["build"], cmd = "sh scripts/deploy-prod.sh", description = "Deploy to production" }
