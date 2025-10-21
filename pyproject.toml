@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "Proprietary - See LICENSE file"}
 requires-python = ">=3.8"
 authors = [
-    {name = "Vipin", email = "vipin@example.com"}
+    {name = "taskx Project"}
 ]
 keywords = [
     "task runner",
@@ -61,11 +61,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://taskx.dev"
-Documentation = "https://docs.taskx.dev"
-Repository = "https://github.com/yourusername/taskx"
-"Bug Tracker" = "https://github.com/yourusername/taskx/issues"
-Changelog = "https://github.com/yourusername/taskx/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/vipin08/taskx"
+Repository = "https://github.com/vipin08/taskx"
+"Bug Tracker" = "https://github.com/vipin08/taskx/issues"
 
 [project.scripts]
 taskx = "taskx.cli.main:cli"
