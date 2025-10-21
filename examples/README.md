@@ -67,6 +67,60 @@ taskx notebook              # Start Jupyter Lab
 taskx graph --format mermaid > pipeline.mmd  # Export pipeline diagram
 ```
 
+### 4. Cryptocurrency Price Tracker (`crypto-tracker/`)
+
+**Real-world example** demonstrating a complete data processing pipeline with live API integration.
+
+**Features:**
+- Fetch live cryptocurrency prices from Coinbase API
+- Data validation and quality checks
+- Statistical analysis and reporting
+- HTML report generation
+- Parallel quality checks
+- Watch mode for development
+- Virtual environment setup
+
+**What it does:**
+1. Fetches real-time prices for BTC, ETH, SOL, ADA, DOT
+2. Validates data integrity
+3. Computes statistics (total value, average, min, max)
+4. Generates beautiful HTML reports
+
+**Try it:**
+```bash
+cd crypto-tracker
+
+# Setup virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Run complete pipeline
+taskx run pipeline
+
+# Run individual tasks
+taskx run fetch           # Fetch live prices
+taskx run validate        # Validate data quality
+taskx run analyze         # Compute statistics
+taskx run report          # Generate HTML report
+
+# View the report
+taskx run view            # Opens report in browser
+
+# Watch mode for development
+taskx watch dev
+
+# See task dependencies
+taskx graph --task view
+```
+
+**Learning highlights:**
+- Real API integration with error handling
+- Multi-stage data pipeline with dependencies
+- Data validation patterns
+- HTML report generation
+- Production-ready project structure
+
 ## Common Patterns
 
 ### Parallel Execution
@@ -124,8 +178,9 @@ dev = { cmd = "uvicorn ${APP_NAME}:app --port ${PORT} --reload" }
 ## Learning Path
 
 1. **Start with** `simple-python` to learn basic taskx concepts
-2. **Move to** `flask-app` to see how taskx handles web development
-3. **Explore** `data-science` for complex dependency pipelines
+2. **Try** `crypto-tracker` for a real-world data processing example
+3. **Move to** `flask-app` to see how taskx handles web development
+4. **Explore** `data-science` for complex ML dependency pipelines
 
 ## Tips
 

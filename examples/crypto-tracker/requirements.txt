@@ -1,0 +1,11 @@
+# Cryptocurrency Price Tracker - Dependencies
+
+# Task automation
+taskx>=0.1.0
+
+# No additional dependencies needed - using only Python standard library
+# The scripts use:
+# - urllib (HTTP requests)
+# - json (JSON parsing)
+# - pathlib (file operations)
+# - datetime (timestamps)

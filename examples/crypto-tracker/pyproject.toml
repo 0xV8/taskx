@@ -1,0 +1,63 @@
+# Cryptocurrency Price Tracker
+# Real-world example demonstrating taskx task automation
+
+[project]
+name = "crypto-tracker"
+version = "1.0.0"
+description = "Real-time cryptocurrency price tracker and analyzer"
+
+# ============================================================================
+# taskx Configuration - Task Automation
+# ============================================================================
+
+[tool.taskx.env]
+PYTHON = "python3"
+DATA_DIR = "data"
+REPORTS_DIR = "reports"
+SCRIPTS_DIR = "scripts"
+
+[tool.taskx.tasks]
+
+# ──────────────────────────────────────────────────────────────────────────
+# Data Collection Tasks
+# ──────────────────────────────────────────────────────────────────────────
+
+fetch = { cmd = "${PYTHON} ${SCRIPTS_DIR}/fetch_prices.py", description = "Fetch live cryptocurrency prices from API" }
+
+validate = { depends = ["fetch"], cmd = "${PYTHON} ${SCRIPTS_DIR}/validate_data.py", description = "Validate data quality and integrity" }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Data Processing Tasks
+# ──────────────────────────────────────────────────────────────────────────
+
+analyze = { depends = ["validate"], cmd = "${PYTHON} ${SCRIPTS_DIR}/analyze_data.py", description = "Analyze prices and compute statistics" }
+
+report = { depends = ["analyze"], cmd = "${PYTHON} ${SCRIPTS_DIR}/generate_report.py", description = "Generate HTML report with visualizations" }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Complete Pipeline
+# ──────────────────────────────────────────────────────────────────────────
+
+pipeline = { depends = ["fetch", "validate", "analyze", "report"], cmd = "echo '✓ Complete pipeline executed successfully!'", description = "Run complete data pipeline: fetch → validate → analyze → report" }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Quality Checks (Parallel Execution)
+# ──────────────────────────────────────────────────────────────────────────
+
+check = { parallel = ["${PYTHON} ${SCRIPTS_DIR}/validate_data.py", "echo 'Checking file permissions...'", "echo 'Checking directory structure...'"], description = "Run all quality checks in parallel" }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Development Tasks
+# ──────────────────────────────────────────────────────────────────────────
+
+dev = { cmd = "${PYTHON} ${SCRIPTS_DIR}/fetch_prices.py", watch = ["scripts/**/*.py"], description = "Development mode: auto-run on file changes" }
+
+clean = { cmd = "rm -rf ${DATA_DIR}/* ${REPORTS_DIR}/*", description = "Clean all generated data and reports" }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Quick Tasks
+# ──────────────────────────────────────────────────────────────────────────
+
+quick = { cmd = "${PYTHON} ${SCRIPTS_DIR}/fetch_prices.py && ${PYTHON} ${SCRIPTS_DIR}/analyze_data.py", description = "Quick fetch and analyze (no validation)" }
+
+view = { depends = ["report"], cmd = "open ${REPORTS_DIR}/crypto_report.html", description = "Generate and view report in browser" }
