@@ -61,9 +61,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/vipin08/taskx"
-Repository = "https://github.com/vipin08/taskx"
-"Bug Tracker" = "https://github.com/vipin08/taskx/issues"
+Homepage = "https://github.com/0xV8/taskx"
+Repository = "https://github.com/0xV8/taskx"
+"Bug Tracker" = "https://github.com/0xV8/taskx/issues"
 
 [project.scripts]
 taskx = "taskx.cli.main:cli"

@@ -4,8 +4,8 @@
 
 [![PyPI](https://img.shields.io/pypi/v/taskx.svg)](https://pypi.org/project/taskx/)
 [![Python](https://img.shields.io/pypi/pyversions/taskx.svg)](https://pypi.org/project/taskx/)
-[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](https://github.com/vipin08/taskx/blob/main/LICENSE)
-[![Tests](https://github.com/vipin08/taskx/workflows/tests/badge.svg)](https://github.com/vipin08/taskx/actions)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](https://github.com/0xV8/taskx/blob/main/LICENSE)
+[![Tests](https://github.com/0xV8/taskx/workflows/tests/badge.svg)](https://github.com/0xV8/taskx/actions)
 
 ---
 
@@ -296,7 +296,7 @@ test.on_error = "notify-send 'Tests failed!'"
 dev = { cmd = "uvicorn app:app", watch = ["**/*.py"] }
 ```
 
-Full documentation: **[GitHub Repository](https://github.com/vipin08/taskx)**
+Full documentation: **[GitHub Repository](https://github.com/0xV8/taskx)**
 
 ---
 
@@ -410,14 +410,14 @@ We love contributions! Check out our [Contributing Guide](./CONTRIBUTING.md).
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=vipin08/taskx&type=Date)](https://star-history.com/#vipin08/taskx&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=0xV8/taskx&type=Date)](https://star-history.com/#0xV8/taskx&Date)
 
 ---
 
 ## 💬 Community
 
-- **GitHub**: [github.com/vipin08/taskx](https://github.com/vipin08/taskx)
-- **Issues**: [Report bugs or request features](https://github.com/vipin08/taskx/issues)
+- **GitHub**: [github.com/0xV8/taskx](https://github.com/0xV8/taskx)
+- **Issues**: [Report bugs or request features](https://github.com/0xV8/taskx/issues)
 
 ---
 

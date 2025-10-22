@@ -285,7 +285,7 @@ This pattern works for many scenarios:
 
 ## 🎓 Learn More
 
-- **taskx Documentation**: [GitHub](https://github.com/vipin08/taskx)
+- **taskx Documentation**: [GitHub](https://github.com/0xV8/taskx)
 - **Install taskx**: `pip install taskx`
 
 ---
