@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "taskx"
-version = "0.2.0"
+version = "0.2.1"
 description = "Modern Python task runner - npm scripts for Python"
 readme = "README.md"
 license = {text = "Proprietary - See LICENSE file"}

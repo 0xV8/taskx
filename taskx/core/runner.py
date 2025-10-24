@@ -21,7 +21,7 @@ from taskx.core.task import ExecutionResult, Task
 from taskx.execution.parallel import ParallelExecutor
 from taskx.utils.platform import PlatformUtils
 from taskx.utils.secure_exec import SecureCommandExecutor, SecurityError
-from taskx.utils.shell import ShellValidator
+from taskx.utils.shell import EnvironmentExpander, ShellValidator
 
 
 class TaskRunner:
@@ -132,7 +132,7 @@ class TaskRunner:
                     task_name=task_name,
                     success=False,
                     exit_code=130,  # Standard exit code for SIGINT
-                    error_message="Cancelled by user",
+                    error=RuntimeError("Cancelled by user"),
                 )
             except RuntimeError as e:
                 self.console.print(f"[red]✗ Prompt error: {e}[/red]")
@@ -140,7 +140,7 @@ class TaskRunner:
                     task_name=task_name,
                     success=False,
                     exit_code=1,
-                    error_message=str(e),
+                    error=e,
                 )
 
         # Handle confirmation prompt
@@ -151,7 +151,7 @@ class TaskRunner:
 
                 if confirm_config:
                     # Expand variables in confirmation message
-                    message = self.env_manager.expand_variables(confirm_config.message, env)
+                    message = EnvironmentExpander.expand_variables(confirm_config.message, env)
 
                     # Ask for confirmation
                     if not self.prompt_manager.confirm_action(
@@ -162,7 +162,7 @@ class TaskRunner:
                             task_name=task_name,
                             success=False,
                             exit_code=130,
-                            error_message="Cancelled by user",
+                            error=RuntimeError("Cancelled by user"),
                         )
 
             except KeyboardInterrupt:
@@ -171,7 +171,7 @@ class TaskRunner:
                     task_name=task_name,
                     success=False,
                     exit_code=130,
-                    error_message="Cancelled by user",
+                    error=RuntimeError("Cancelled by user"),
                 )
 
         # Check environment requirements
@@ -340,7 +340,20 @@ class TaskRunner:
         """
         # Validate and expand environment variables in all commands
         commands = []
-        for cmd in task.parallel:
+        for task_name in task.parallel:
+            # Look up the task to get its command
+            if task_name not in self.config.tasks:
+                return ExecutionResult(
+                    task_name=task.name,
+                    success=False,
+                    exit_code=-1,
+                    error=ValueError(f"Task '{task_name}' not found in parallel execution"),
+                )
+
+            # Get the actual command from the task
+            parallel_task = self.config.tasks[task_name]
+            cmd = parallel_task.cmd if parallel_task.cmd else task_name
+
             # Validate RAW command before expansion (security fix)
             if not ShellValidator.is_safe_command(cmd):
                 return ExecutionResult(
