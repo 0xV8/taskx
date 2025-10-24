@@ -3,11 +3,10 @@ Configuration and security validation for taskx.
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Set
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from taskx.core.config import Config
-    from taskx.core.task import Task
 
 
 class ConfigValidator:
@@ -49,9 +48,7 @@ class ConfigValidator:
         for task_name, task in config.tasks.items():
             for dep in task.depends:
                 if dep not in config.tasks:
-                    raise ValueError(
-                        f"Task '{task_name}' depends on non-existent task '{dep}'"
-                    )
+                    raise ValueError(f"Task '{task_name}' depends on non-existent task '{dep}'")
 
     def _validate_task_names(self, config: "Config") -> None:
         """Validate task names are valid identifiers."""

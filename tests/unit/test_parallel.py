@@ -2,12 +2,10 @@
 Tests for parallel task execution.
 """
 
-import asyncio
 from pathlib import Path
 
 import pytest
 
-from taskx.core.task import ExecutionResult
 from taskx.execution.parallel import ParallelExecutor, run_parallel_sync
 
 

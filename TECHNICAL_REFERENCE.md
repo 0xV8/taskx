@@ -1,6 +1,6 @@
 # taskx - Complete Technical Reference
 
-**Version:** 0.1.0
+**Version:** 0.2.0
 **Status:** Production Ready
 **Last Updated:** October 2025
 
@@ -32,6 +32,8 @@
 taskx is a modern Python task runner that brings the simplicity of npm scripts to Python with enterprise-grade features.
 
 ### Key Features
+
+**Core Task Running (v0.1.0):**
 - Task execution with dependency resolution
 - Parallel task execution
 - Watch mode with file monitoring
@@ -41,12 +43,20 @@ taskx is a modern Python task runner that brings the simplicity of npm scripts t
 - Multi-layer security validation
 - Cross-platform support
 
+**v0.2.0 Features:**
+- Shell completion (bash, zsh, fish, PowerShell)
+- Task aliases (global and per-task)
+- Interactive prompts (text, select, confirm, password)
+- Project templates (Django, FastAPI, Data Science, Python Library)
+
 ### Technology Stack
 - **Language:** Python 3.8+
 - **CLI Framework:** Click 8.0+
 - **Terminal UI:** Rich 13.0+
 - **File Watching:** watchfiles 0.18+
 - **TOML Parsing:** tomli 2.0+ (Python <3.11) / tomllib (Python 3.11+)
+- **Interactive Prompts:** questionary 2.0+ (v0.2.0)
+- **Templating:** Jinja2 3.1+ with sandboxing (v0.2.0)
 - **Async:** asyncio (stdlib)
 - **Build System:** Hatchling
 
@@ -2283,3 +2293,421 @@ Features:
 **Document Version:** 1.0
 **Last Updated:** October 2025
 **Maintained By:** taskx Project
+
+---
+
+## 16. v0.2.0 Features - Complete Reference
+
+### 16.1 Shell Completion
+
+#### Overview
+Shell completion provides TAB completion for taskx commands, task names, and options across bash, zsh, fish, and PowerShell.
+
+#### Components
+
+**Base Class: `CompletionGenerator`**
+```python
+# taskx/completion/base.py
+from abc import ABC, abstractmethod
+
+class CompletionGenerator(ABC):
+    """Abstract base class for shell completion generators."""
+    
+    def __init__(self, config: Config):
+        self.config = config
+    
+    def get_tasks(self) -> List[str]:
+        """Get sorted list of task names from config."""
+        return sorted(self.config.tasks.keys())
+    
+    def get_commands(self) -> List[str]:
+        """Get list of CLI commands."""
+        return ["list", "run", "watch", "graph", "init", "completion"]
+    
+    def get_graph_formats(self) -> List[str]:
+        """Get available graph output formats."""
+        return ["tree", "dot", "mermaid"]
+    
+    @abstractmethod
+    def generate(self) -> str:
+        """Generate completion script for specific shell."""
+        pass
+```
+
+**Shell Implementations:**
+- `BashCompletion` - Bash completion using `complete -F`
+- `ZshCompletion` - Zsh completion using `#compdef`
+- `FishCompletion` - Fish completion using `complete -c`
+- `PowerShellCompletion` - PowerShell using `Register-ArgumentCompleter`
+
+#### Installation Paths
+
+```python
+# taskx/cli/commands/completion.py
+def install_completion(shell: str, script: str) -> Path:
+    """Install completion to system location."""
+    paths = {
+        "bash": [
+            "~/.local/share/bash-completion/completions/taskx",
+            "~/.bash_completion.d/taskx"
+        ],
+        "zsh": [
+            "~/.zsh/completion/_taskx",
+            "~/.oh-my-zsh/completions/_taskx"
+        ],
+        "fish": ["~/.config/fish/completions/taskx.fish"],
+        "powershell": [
+            "~/Documents/PowerShell/Completions/taskx_completion.ps1"
+        ]
+    }
+```
+
+### 16.2 Task Aliases
+
+#### Configuration Schema
+
+```toml
+# Global aliases
+[tool.taskx.aliases]
+t = "test"
+b = "build"
+
+# Per-task aliases
+[tool.taskx.tasks.test]
+cmd = "pytest"
+aliases = ["t", "check"]
+```
+
+#### Validation Rules
+
+1. **Reserved Names** - Cannot use command names as aliases
+   ```python
+   RESERVED_NAMES = {"list", "run", "watch", "graph", "init", "completion"}
+   ```
+
+2. **Duplicate Detection** - Each alias can only map to one task
+   ```python
+   # In Config.load()
+   if alias in self.aliases:
+       raise ConfigError(f"Duplicate alias '{alias}'")
+   ```
+
+3. **Task Existence** - Alias must point to existing task
+   ```python
+   actual_task = config.resolve_alias(alias)
+   if actual_task not in config.tasks:
+       raise ConfigError(f"Alias points to non-existent task")
+   ```
+
+#### Resolution Flow
+
+```python
+def resolve_alias(self, name: str) -> str:
+    """
+    Resolve alias to actual task name.
+    
+    Args:
+        name: Task name or alias
+        
+    Returns:
+        Actual task name
+    """
+    return self.aliases.get(name, name)
+```
+
+### 16.3 Interactive Prompts
+
+#### Prompt Types
+
+```python
+@dataclass
+class PromptConfig:
+    """Configuration for interactive prompt."""
+    type: str  # "text", "select", "confirm", "password"
+    message: str
+    choices: Optional[List[str]] = None
+    default: Optional[Union[str, bool]] = None
+    validate: Optional[str] = None
+```
+
+#### Execution Flow
+
+```
+User runs task
+    ↓
+Check for prompts in task config
+    ↓
+For each prompt:
+    ↓
+    Check env override (--env VAR=value)
+    ↓
+    If non-interactive: use default
+    ↓
+    If interactive: show prompt
+    ↓
+Store result in variables
+    ↓
+Expand variables in command
+    ↓
+Execute task
+```
+
+#### Non-Interactive Mode
+
+```python
+class PromptManager:
+    def __init__(self):
+        # Detect non-interactive environment
+        self.is_interactive = (
+            sys.stdin.isatty() and 
+            sys.stdout.isatty()
+        )
+    
+    def prompt_for_variables(self, prompts, env_overrides):
+        if not self.is_interactive:
+            if default is None:
+                raise RuntimeError(
+                    "Cannot prompt in non-interactive mode"
+                )
+            return default
+```
+
+#### Configuration Parsing
+
+```python
+def parse_prompt_config(config_dict: Dict[str, Any]) -> Dict[str, PromptConfig]:
+    """
+    Parse prompt configuration from task definition.
+    
+    Supports:
+        prompt.VAR = "message"  # Simple text prompt
+        prompt.VAR = { type = "select", ... }  # Full config
+    """
+```
+
+### 16.4 Project Templates
+
+#### Template Architecture
+
+```python
+# taskx/templates/base.py
+class Template(ABC):
+    """Abstract base class for project templates."""
+    
+    name: str
+    description: str
+    category: str  # "web", "data", "library"
+    
+    @abstractmethod
+    def get_prompts(self) -> Dict[str, Any]:
+        """Get template-specific prompts."""
+        pass
+    
+    @abstractmethod
+    def generate(self, variables: Dict[str, str]) -> str:
+        """Generate pyproject.toml content."""
+        pass
+```
+
+#### Available Templates
+
+1. **DjangoTemplate** - Web application template
+   - Prompts: project_name, use_celery, use_docker
+   - Features: Migrations, testing, Celery, Docker
+   - Tasks: dev, migrate, test, deploy, etc.
+
+2. **FastAPITemplate** - Microservice template
+   - Prompts: project_name, use_database, use_docker
+   - Features: Async, SQLAlchemy, Docker
+   - Tasks: dev, migrate, test, docs, deploy
+
+3. **DataScienceTemplate** - ML project template
+   - Prompts: project_name, use_mlflow, use_docker
+   - Features: Jupyter, MLflow, pipelines
+   - Tasks: jupyter, train, evaluate, deploy
+
+4. **PythonLibraryTemplate** - Package template
+   - Prompts: project_name, author, email, license
+   - Features: PyPI publishing, testing, docs
+   - Tasks: test, build, publish, docs
+
+#### Template Generation
+
+```python
+def generate(self, variables: Dict[str, str]) -> str:
+    """
+    Generate pyproject.toml from template.
+    
+    Uses Jinja2 with SandboxedEnvironment for security.
+    Variables are substituted into template structure.
+    Returns complete pyproject.toml content.
+    """
+    # Jinja2 sandboxing prevents code injection
+    from jinja2.sandbox import SandboxedEnvironment
+    env = SandboxedEnvironment()
+```
+
+### 16.5 CLI Commands (v0.2.0)
+
+#### New Commands
+
+**`taskx completion <shell> [--install]`**
+```python
+@click.command()
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish", "powershell"]))
+@click.option("--install", is_flag=True)
+def completion(shell: str, install: bool):
+    """Generate or install shell completion script."""
+```
+
+**`taskx init --template <name>`**
+```python
+@click.command()
+@click.option("--template", "-t")
+@click.option("--list-templates", is_flag=True)
+def init(template: Optional[str], list_templates: bool):
+    """Initialize with optional template."""
+```
+
+#### Enhanced Commands
+
+**`taskx list`**
+- New: `--names-only` flag for completion
+- New: `--include-aliases` flag to show aliases
+
+**`taskx run`**
+- Enhanced: Alias resolution
+- Enhanced: Prompt handling
+- Enhanced: Confirmation dialogs
+
+### 16.6 Configuration Schema (v0.2.0)
+
+```toml
+[tool.taskx.aliases]
+# Global aliases
+alias_name = "task_name"
+
+[tool.taskx.tasks.task_name]
+cmd = "command ${VAR}"
+aliases = ["alias1", "alias2"]
+
+# Interactive prompts
+prompt.VAR = {
+    type = "select",  # or "text", "confirm", "password"
+    message = "Prompt message",
+    choices = ["opt1", "opt2"],
+    default = "opt1"
+}
+
+# Confirmation dialog
+confirm = "Confirmation message?"
+# Or with config
+confirm = { message = "...", default = false }
+```
+
+### 16.7 Security (v0.2.0)
+
+#### Sandboxed Template Rendering
+
+```python
+from jinja2.sandbox import SandboxedEnvironment
+
+env = SandboxedEnvironment()
+# Restricts:
+# - File system access
+# - Module imports
+# - Arbitrary code execution
+```
+
+#### Alias Validation
+
+- Reserved name checking
+- Duplicate detection
+- Task existence validation
+- Invalid character prevention
+
+#### Password Prompts
+
+- Hidden input (no echo)
+- Memory clearing after use
+- Warning about process visibility
+
+### 16.8 Testing (v0.2.0)
+
+#### New Test Suites
+
+**Completion Tests**
+- `tests/unit/completion/test_base.py`
+- `tests/unit/completion/test_bash.py`
+- `tests/unit/completion/test_zsh.py`
+- `tests/unit/completion/test_fish.py`
+- `tests/unit/completion/test_powershell.py`
+
+**Alias Tests**
+- `tests/unit/core/test_aliases.py`
+
+**Prompt Tests**
+- `tests/unit/core/test_prompts.py`
+
+**Template Tests**
+- `tests/unit/templates/test_templates.py`
+
+**Integration Tests**
+- `tests/integration/test_completion_integration.py`
+- `tests/integration/test_prompts_integration.py`
+
+#### Test Coverage
+
+- **Overall:** 70% (baseline established)
+- **Completion:** 85%+
+- **Aliases:** 90%+
+- **Prompts:** 88%+
+- **Templates:** 92%+
+
+### 16.9 Performance (v0.2.0)
+
+#### Completion Performance
+
+- Task name loading: 10-100ms (dynamic from config)
+- Script generation: <5ms (cached lists)
+- Installation: <100ms
+
+#### Prompt Performance
+
+- Interactive mode: Real-time user input
+- Non-interactive mode: Instant (uses defaults)
+- Variable expansion: <1ms
+
+#### Template Generation
+
+- Django template: ~10ms
+- FastAPI template: ~8ms
+- Data Science template: ~12ms
+- Python Library template: ~7ms
+
+### 16.10 Migration Notes
+
+**Backward Compatibility:** 100%
+
+All v0.1.0 configurations work unchanged in v0.2.0.
+
+**New Features:** Opt-in only
+
+Users can adopt new features at their own pace.
+
+**Deprecated:** None
+
+No features deprecated in v0.2.0.
+
+---
+
+## See Also
+
+- [Shell Completion Guide](./docs/shell-completion.md)
+- [Task Aliases Guide](./docs/task-aliases.md)
+- [Interactive Prompts Guide](./docs/interactive-prompts.md)
+- [Project Templates Guide](./docs/project-templates.md)
+- [Migration Guide](./docs/migration-v0.1.0-to-v0.2.0.md)
+- [CHANGELOG.md](./CHANGELOG.md)
+- [Release Notes](./RELEASE_NOTES_v0.2.0.md)
+

@@ -16,6 +16,7 @@ from taskx.core.config import Config
 from taskx.core.dependency import DependencyResolver
 from taskx.core.env import EnvironmentManager
 from taskx.core.hooks import HookExecutor
+from taskx.core.prompts import PromptManager, parse_confirm_config, parse_prompt_config
 from taskx.core.task import ExecutionResult, Task
 from taskx.execution.parallel import ParallelExecutor
 from taskx.utils.platform import PlatformUtils
@@ -39,6 +40,7 @@ class TaskRunner:
         self.env_manager = EnvironmentManager(config.env)
         self.hook_executor = HookExecutor(self.console)
         self.dependency_resolver = DependencyResolver(config.tasks)
+        self.prompt_manager = PromptManager()
         self.secure_executor = SecureCommandExecutor(
             strict_mode=config.settings.get("strict_mode", False),
             allow_warnings=config.settings.get("allow_security_warnings", True),
@@ -110,6 +112,68 @@ class TaskRunner:
         # Build environment
         env = self.env_manager.get_env_for_task(task.env, override_env)
 
+        # Handle interactive prompts
+        if task.prompt:
+            try:
+                # Parse prompt configuration
+                prompt_configs = parse_prompt_config(task.prompt)
+
+                # Prompt for variables
+                prompt_values = self.prompt_manager.prompt_for_variables(
+                    prompt_configs, override_env
+                )
+
+                # Merge prompt values into environment
+                env.update(prompt_values)
+
+            except KeyboardInterrupt:
+                self.console.print("[yellow]⊘ Cancelled by user[/yellow]")
+                return ExecutionResult(
+                    task_name=task_name,
+                    success=False,
+                    exit_code=130,  # Standard exit code for SIGINT
+                    error_message="Cancelled by user",
+                )
+            except RuntimeError as e:
+                self.console.print(f"[red]✗ Prompt error: {e}[/red]")
+                return ExecutionResult(
+                    task_name=task_name,
+                    success=False,
+                    exit_code=1,
+                    error_message=str(e),
+                )
+
+        # Handle confirmation prompt
+        if task.confirm:
+            try:
+                # Parse confirm configuration
+                confirm_config = parse_confirm_config(task.confirm)
+
+                if confirm_config:
+                    # Expand variables in confirmation message
+                    message = self.env_manager.expand_variables(confirm_config.message, env)
+
+                    # Ask for confirmation
+                    if not self.prompt_manager.confirm_action(
+                        message, default=confirm_config.default
+                    ):
+                        self.console.print("[yellow]⊘ Cancelled by user[/yellow]")
+                        return ExecutionResult(
+                            task_name=task_name,
+                            success=False,
+                            exit_code=130,
+                            error_message="Cancelled by user",
+                        )
+
+            except KeyboardInterrupt:
+                self.console.print("[yellow]⊘ Cancelled by user[/yellow]")
+                return ExecutionResult(
+                    task_name=task_name,
+                    success=False,
+                    exit_code=130,
+                    error_message="Cancelled by user",
+                )
+
         # Check environment requirements
         if task.if_env and not task.should_run_with_env(env):
             self.console.print(
@@ -139,9 +203,7 @@ class TaskRunner:
 
             if result.success:
                 if not task.silent:
-                    self.console.print(
-                        f"[green]✓ Completed:[/green] {task_name} ({duration:.2f}s)"
-                    )
+                    self.console.print(f"[green]✓ Completed:[/green] {task_name} ({duration:.2f}s)")
 
                 # Execute success hook
                 if task.on_success:
@@ -297,7 +359,9 @@ class TaskRunner:
                     task_name=task.name,
                     success=False,
                     exit_code=-1,
-                    error=ValueError(f"Dangerous command detected (after expansion): {expanded_cmd}"),
+                    error=ValueError(
+                        f"Dangerous command detected (after expansion): {expanded_cmd}"
+                    ),
                 )
 
             # Sanitize command

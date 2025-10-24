@@ -91,9 +91,7 @@ class EnvironmentManager:
         """
         return EnvironmentExpander.expand_variables(cmd, env)
 
-    def validate_required_vars(
-        self, cmd: str, env: Dict[str, str]
-    ) -> tuple[bool, list[str]]:
+    def validate_required_vars(self, cmd: str, env: Dict[str, str]) -> tuple[bool, list[str]]:
         """
         Check if all required variables are available.
 

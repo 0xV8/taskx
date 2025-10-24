@@ -8,7 +8,6 @@ import os
 import re
 import shlex
 import subprocess
-from pathlib import Path
 from typing import List, Optional, Tuple
 
 
@@ -32,20 +31,49 @@ class SecureCommandExecutor:
     # Common safe commands (for strict mode)
     WHITELISTED_COMMANDS = {
         # Python
-        "python", "python3", "pip", "pytest", "mypy", "black", "ruff", "isort",
-        "poetry", "hatch", "pdm", "tox", "nox",
+        "python",
+        "python3",
+        "pip",
+        "pytest",
+        "mypy",
+        "black",
+        "ruff",
+        "isort",
+        "poetry",
+        "hatch",
+        "pdm",
+        "tox",
+        "nox",
         # JavaScript/Node
-        "node", "npm", "yarn", "pnpm", "npx",
+        "node",
+        "npm",
+        "yarn",
+        "pnpm",
+        "npx",
         # Build tools
-        "make", "cmake", "cargo", "go",
+        "make",
+        "cmake",
+        "cargo",
+        "go",
         # Version control
         "git",
         # Docker
-        "docker", "docker-compose",
+        "docker",
+        "docker-compose",
         # Shell utilities
-        "echo", "cat", "ls", "pwd", "cd", "mkdir", "cp", "mv",
+        "echo",
+        "cat",
+        "ls",
+        "pwd",
+        "cd",
+        "mkdir",
+        "cp",
+        "mv",
         # Text processing
-        "grep", "sed", "awk", "tr",
+        "grep",
+        "sed",
+        "awk",
+        "tr",
     }
 
     # Patterns that indicate potential security issues

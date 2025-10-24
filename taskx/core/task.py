@@ -4,7 +4,7 @@ Task model and related data structures.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -56,6 +56,7 @@ class Task:
     pre: Optional[str] = None
     post: Optional[str] = None
     watch: List[str] = field(default_factory=list)
+    aliases: List[str] = field(default_factory=list)  # Per-task aliases
     prompt: Optional[str] = None
     confirm: Optional[str] = None
     if_platform: Optional[str] = None
@@ -72,9 +73,7 @@ class Task:
             raise ValueError(f"Task '{self.name}' must have either 'cmd' or 'parallel' defined")
 
         if self.cmd and self.parallel:
-            raise ValueError(
-                f"Task '{self.name}' cannot have both 'cmd' and 'parallel' defined"
-            )
+            raise ValueError(f"Task '{self.name}' cannot have both 'cmd' and 'parallel' defined")
 
         if self.timeout and self.timeout <= 0:
             raise ValueError(f"Task '{self.name}' timeout must be positive")

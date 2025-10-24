@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "taskx"
-version = "0.1.0"
+version = "0.2.0"
 description = "Modern Python task runner - npm scripts for Python"
 readme = "README.md"
 license = {text = "Proprietary - See LICENSE file"}
@@ -44,6 +44,7 @@ dependencies = [
     "watchfiles>=0.18.0",
     "questionary>=2.0.0",
     "python-dotenv>=1.0.0",
+    "jinja2>=3.1.0",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +53,11 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "pytest-timeout>=2.1.0",
+    "pytest-mock>=3.11.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-xdist>=3.3.0",
+    "memory-profiler>=0.61.0",
+    "tox>=4.0.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
     "black>=23.0.0",
@@ -70,6 +76,13 @@ taskx = "taskx.cli.main:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["taskx"]
+
+[tool.hatch.build]
+include = [
+    "taskx/**/*.py",
+    "taskx/templates/**/*.j2",
+    "taskx/templates/**/*.md",
+]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -101,9 +114,11 @@ addopts = [
     "--cov-fail-under=90",
 ]
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "unit: marks tests as unit tests",
     "integration: marks tests as integration tests",
     "e2e: marks tests as end-to-end tests",
+    "performance: marks tests as performance tests",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "windows: marks tests that only run on Windows",
     "unix: marks tests that only run on Unix systems",
     "requires_shell: marks tests that require a real shell",
@@ -243,6 +258,12 @@ src_paths = ["taskx", "tests"]
 PYTHON = "python3"
 PYTEST_ARGS = "-v --cov=taskx --cov-report=term-missing"
 
+[tool.taskx.aliases]
+t = "test"
+ta = "test-all"
+f = "format"
+l = "lint"
+
 [tool.taskx.tasks]
 # Development tasks
 dev = { cmd = "echo 'taskx development environment ready!'", description = "Start development" }
@@ -271,6 +292,9 @@ build = { cmd = "python -m build", description = "Build distribution packages" }
 # Deployment tasks
 publish-test = { depends = ["check", "build"], cmd = "twine upload --repository testpypi dist/*", description = "Publish to TestPyPI", confirm = "Are you sure you want to publish to TestPyPI?" }
 publish = { depends = ["check", "build"], cmd = "twine upload dist/*", description = "Publish to PyPI", confirm = "Are you sure you want to publish to PyPI?" }
+
+# Test task with prompts
+greet = { cmd = "echo 'Hello ${NAME}! You selected: ${OPTION}'", description = "Test interactive prompts", prompt = { NAME = { type = "text", message = "What's your name?", default = "World" }, OPTION = { type = "select", message = "Choose an option:", choices = ["Option A", "Option B", "Option C"] } } }
 
 # Documentation
 docs-serve = { cmd = "mkdocs serve", description = "Serve documentation locally" }

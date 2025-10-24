@@ -2,7 +2,7 @@
 
 import pytest
 
-from taskx.core.task import Task, ExecutionResult, Hook
+from taskx.core.task import ExecutionResult, Hook, Task
 
 
 class TestTask:

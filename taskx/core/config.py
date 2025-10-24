@@ -44,6 +44,9 @@ class Config:
         settings: Global settings
     """
 
+    # Reserved command names that cannot be used as aliases
+    RESERVED_NAMES = {"list", "run", "watch", "graph", "init", "completion"}
+
     def __init__(self, config_path: Optional[Path] = None):
         """
         Initialize configuration.
@@ -53,6 +56,7 @@ class Config:
         """
         self.config_path = config_path or Path("pyproject.toml")
         self.tasks: Dict[str, Task] = {}
+        self.aliases: Dict[str, str] = {}  # alias -> task_name mapping
         self.env: Dict[str, str] = {}
         self.settings: Dict[str, Any] = {}
         self._raw_data: Dict[str, Any] = {}
@@ -110,6 +114,27 @@ class Config:
             except Exception as e:
                 raise ConfigError(f"Failed to parse task '{name}': {e}") from e
 
+        # Load global aliases
+        aliases_data = taskx_config.get("aliases", {})
+        for alias, task_name in aliases_data.items():
+            if not isinstance(alias, str) or not isinstance(task_name, str):
+                raise ConfigError(f"Invalid alias definition: {alias} -> {task_name}")
+            self.aliases[alias] = task_name
+
+        # Load per-task aliases from task definitions
+        for name, task in self.tasks.items():
+            if hasattr(task, "aliases") and task.aliases:
+                for alias in task.aliases:
+                    if alias in self.aliases:
+                        raise ConfigError(
+                            f"Duplicate alias '{alias}' found for task '{name}' "
+                            f"(already defined for '{self.aliases[alias]}')"
+                        )
+                    self.aliases[alias] = name
+
+        # Validate aliases
+        self._validate_aliases()
+
         # Validate configuration
         validator = ConfigValidator()
         validator.validate_config(self)
@@ -137,6 +162,44 @@ class Config:
                     f"Must contain only alphanumeric characters and underscores"
                 )
 
+    def _validate_aliases(self) -> None:
+        """
+        Validate alias configuration.
+
+        Raises:
+            ConfigError: If aliases are invalid
+        """
+        for alias, task_name in self.aliases.items():
+            # Check for conflicts with reserved command names
+            if alias in self.RESERVED_NAMES:
+                raise ConfigError(
+                    f"Alias '{alias}' conflicts with reserved command name. "
+                    f"Reserved names: {', '.join(sorted(self.RESERVED_NAMES))}"
+                )
+
+            # Check that aliased task exists
+            if task_name not in self.tasks:
+                raise ConfigError(f"Alias '{alias}' points to non-existent task '{task_name}'")
+
+            # Check for circular aliases (alias -> alias)
+            if task_name in self.aliases:
+                raise ConfigError(
+                    f"Circular alias detected: '{alias}' -> '{task_name}' "
+                    f"('{task_name}' is also an alias)"
+                )
+
+    def resolve_alias(self, name: str) -> str:
+        """
+        Resolve alias to actual task name.
+
+        Args:
+            name: Task name or alias
+
+        Returns:
+            Actual task name (returns input if not an alias)
+        """
+        return self.aliases.get(name, name)
+
     def _parse_task(self, name: str, task_def: Any) -> Task:
         """
         Parse task definition into Task object.
@@ -163,9 +226,7 @@ class Config:
             if "alias" in task_dict:
                 alias_name = task_dict["alias"]
                 if alias_name not in self.tasks:
-                    raise ConfigError(
-                        f"Task '{name}' aliases non-existent task '{alias_name}'"
-                    )
+                    raise ConfigError(f"Task '{name}' aliases non-existent task '{alias_name}'")
                 # Copy the aliased task
                 aliased_task = self.tasks[alias_name]
                 return Task(
@@ -186,6 +247,16 @@ class Config:
             if cmd and parallel:
                 raise ConfigError(f"Task '{name}' cannot have both 'cmd' and 'parallel'")
 
+            # Parse aliases field
+            aliases = task_dict.get("aliases", [])
+            if isinstance(aliases, str):
+                # Single alias as string
+                aliases = [aliases]
+            elif not isinstance(aliases, list):
+                raise ConfigError(
+                    f"Task '{name}' aliases must be string or list, got {type(aliases)}"
+                )
+
             return Task(
                 name=name,
                 cmd=cmd,
@@ -203,6 +274,7 @@ class Config:
                 pre=task_dict.get("pre"),
                 post=task_dict.get("post"),
                 watch=task_dict.get("watch", []),
+                aliases=aliases,
                 prompt=task_dict.get("prompt"),
                 confirm=task_dict.get("confirm"),
                 if_platform=task_dict.get("if_platform"),

@@ -5,7 +5,7 @@ Visualizes task dependencies in ASCII or export formats.
 """
 
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, Set
 
 import click
 from rich.console import Console
@@ -90,7 +90,7 @@ def _print_tree(console: Console, tasks: Dict[str, Task], specific_task: str = N
         for task in tasks.values():
             all_deps.update(task.depends)
 
-        root_tasks = [name for name in tasks.keys() if name not in all_deps or not tasks[name].depends]
+        root_tasks = [name for name in tasks if name not in all_deps or not tasks[name].depends]
 
         if not root_tasks:
             # If all tasks have dependencies (circular or complex), show all
@@ -170,8 +170,8 @@ def _print_mermaid(console: Console, tasks: Dict[str, Task], specific_task: str 
 def _print_dot(console: Console, tasks: Dict[str, Task], specific_task: str = None) -> None:
     """Print dependency graph as Graphviz DOT format."""
     lines = ["digraph Tasks {"]
-    lines.append('    rankdir=LR;')
-    lines.append('    node [shape=box, style=rounded];')
+    lines.append("    rankdir=LR;")
+    lines.append("    node [shape=box, style=rounded];")
 
     # Filter tasks if specific task requested
     if specific_task:

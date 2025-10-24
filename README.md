@@ -9,6 +9,17 @@
 
 ---
 
+## 🎉 What's New in v0.2.0
+
+- **Shell Completion** - TAB completion for commands and tasks in bash, zsh, fish, and PowerShell
+- **Task Aliases** - Create short names for frequently used tasks (e.g., `t` for `test`)
+- **Interactive Prompts** - Ask for user input and confirmations during task execution
+- **Project Templates** - Kickstart projects with 4 production-ready templates (Django, FastAPI, Data Science, Python Library)
+
+[See full changelog](#-roadmap) | [Upgrade guide](./PHASE_1_IMPLEMENTATION_SUMMARY.md)
+
+---
+
 ## ✨ Why taskx?
 
 Stop fighting with Makefiles. taskx brings the simplicity of npm scripts to Python with the power you actually need.
@@ -61,12 +72,33 @@ pip install taskx
 
 ```bash
 $ taskx --version
-taskx version 0.1.0
+taskx version 0.2.0
 ```
 
 ### Initialize
 
+Create a new project with a template:
+
 ```bash
+# List available templates
+$ taskx init --list-templates
+Available templates:
+
+  WEB:
+    django               Django web application with migrations, testing, and deployment
+    fastapi              FastAPI microservice with async support and Docker
+
+  DATA:
+    data-science         ML project with Jupyter, MLflow, and pipeline automation
+
+  LIBRARY:
+    python-library       Python package with PyPI publishing workflow
+
+# Create project from template
+$ taskx init --template django --name myproject
+✓ Created django project with taskx configuration
+
+# Or create a basic project
 $ taskx init
 ✓ Created pyproject.toml with example tasks
 ```
@@ -163,6 +195,81 @@ $ taskx watch dev
 - Helpful error messages
 - Time tracking
 
+### ✅ Shell Completion (NEW in v0.2.0)
+```bash
+# Install completion for your shell
+$ taskx completion bash --install
+✓ Completion installed: ~/.bash_completion.d/taskx
+
+# Now get TAB completion for tasks!
+$ taskx <TAB>
+list  run  watch  graph  init  completion
+$ taskx run <TAB>
+test  dev  lint  deploy
+```
+
+Supports: bash, zsh, fish, PowerShell
+
+### ✅ Task Aliases (NEW in v0.2.0)
+```toml
+[tool.taskx.aliases]
+t = "test"
+d = "dev"
+fmt = "format"
+
+[tool.taskx.tasks]
+test = { cmd = "pytest", aliases = ["t"] }  # Per-task alias
+format = "black . && isort ."
+```
+
+```bash
+$ taskx t  # Runs 'test'
+→ Alias 't' resolves to task 'test'
+===== 51 tests passed =====
+```
+
+### ✅ Interactive Prompts (NEW in v0.2.0)
+```toml
+[tool.taskx.tasks.deploy]
+cmd = "sh deploy.sh ${ENVIRONMENT}"
+prompt.ENVIRONMENT = {
+    type = "select",
+    message = "Deploy to which environment?",
+    choices = ["staging", "production"]
+}
+confirm = "Deploy to ${ENVIRONMENT}?"
+```
+
+```bash
+$ taskx deploy
+? Deploy to which environment? (Use arrow keys)
+  › staging
+    production
+? Deploy to staging? (Y/n) y
+→ Running: deploy
+✓ Completed: deploy
+```
+
+### ✅ Project Templates (NEW in v0.2.0)
+```bash
+# Start new Django project
+$ taskx init --template django
+# Prompts for project name, Celery, Docker options
+# Generates complete project with 20+ tasks
+
+# Start new FastAPI project
+$ taskx init --template fastapi
+# Creates API project with testing, Docker, database setup
+
+# Start ML/Data Science project
+$ taskx init --template data-science
+# Jupyter, MLflow, complete ML pipeline
+
+# Start Python library
+$ taskx init --template python-library
+# Package with PyPI publishing, testing, docs
+```
+
 ---
 
 ## 📊 Comparison
@@ -178,9 +285,13 @@ $ taskx watch dev
 | Watch mode | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Dependency graphs | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Pre/post hooks | ✅ | ⚠️ | ❌ | ✅ | ⚠️ |
+| **Shell completion** ⭐ | ✅ | ⚠️ | ❌ | ⚠️ | ❌ |
+| **Task aliases** ⭐ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Interactive prompts** ⭐ | ✅ | ❌ | ❌ | ⚠️ | ❌ |
+| **Project templates** ⭐ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Security focused | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-**Legend**: ✅ Full support | ⚠️ Partial support | ❌ Not supported
+**Legend**: ✅ Full support | ⚠️ Partial support | ❌ Not supported | ⭐ New in v0.2.0
 
 ---
 
@@ -225,11 +336,19 @@ More examples in [`examples/`](./examples) directory.
 ### Commands
 
 - **`taskx list`** - List all available tasks with descriptions and dependencies
+  - `taskx list --names-only` - Output only task names (for shell completion)
+  - `taskx list --include-aliases` - Include aliases in output
 - **`taskx <task>`** - Run a specific task (with automatic dependency resolution)
 - **`taskx run <task>`** - Explicit task execution
+  - `taskx run <task> --env KEY=VALUE` - Override environment variables
 - **`taskx watch <task>`** - Watch files and auto-restart task on changes
 - **`taskx graph`** - Visualize task dependencies (supports tree, mermaid, dot formats)
 - **`taskx init`** - Initialize taskx configuration in your project
+  - `taskx init --template <name>` - Create project from template ⭐ NEW
+  - `taskx init --list-templates` - Show available templates ⭐ NEW
+- **`taskx completion <shell>`** - Generate shell completion script ⭐ NEW
+  - `taskx completion bash --install` - Install completion for bash
+  - Supported: bash, zsh, fish, powershell
 - **`taskx --version`** - Show version information
 - **`taskx --help`** - Show help for all commands
 
@@ -302,7 +421,7 @@ Full documentation: **[GitHub Repository](https://github.com/0xV8/taskx)**
 
 ## 🛣️ Roadmap
 
-### v0.1.0 (Current Release) ✅
+### v0.1.0 ✅
 - [x] Core task execution with dependencies
 - [x] Parallel task execution
 - [x] Watch mode with file monitoring
@@ -313,16 +432,24 @@ Full documentation: **[GitHub Repository](https://github.com/0xV8/taskx)**
 - [x] Beautiful terminal output
 - [x] Cross-platform support
 
-### v0.2.0 (Planned)
-- [ ] Interactive prompts and confirmations
-- [ ] Shell completion scripts (bash, zsh, fish)
-- [ ] Task aliases
-- [ ] Task caching (skip unchanged)
+### v0.2.0 (Current Release) ✅
+- [x] **Shell completion scripts** (bash, zsh, fish, PowerShell) ⭐
+- [x] **Task aliases** (global and per-task) ⭐
+- [x] **Interactive prompts** with confirmations ⭐
+- [x] **Project templates** (Django, FastAPI, Data Science, Python Library) ⭐
+- [x] Enhanced CLI with environment variable overrides
+- [x] Template system with Jinja2 sandboxing
+- [x] CI/CD-safe interactive prompt handling
+
+### v0.3.0 (Planned)
+- [ ] Task caching (skip unchanged tasks)
 - [ ] Remote task execution
 - [ ] Plugin system
 - [ ] Enhanced error recovery
+- [ ] Task profiling and performance analysis
+- [ ] Multi-project workspace support
 
-See [FINAL_SUMMARY.md](./FINAL_SUMMARY.md) for complete implementation details.
+See [PHASE_1_IMPLEMENTATION_SUMMARY.md](./PHASE_1_IMPLEMENTATION_SUMMARY.md) for v0.2.0 implementation details.
 
 ---
 
@@ -433,6 +560,8 @@ Built with:
 - [Click](https://click.palletsprojects.com/) - CLI framework
 - [Rich](https://rich.readthedocs.io/) - Beautiful terminal output
 - [watchfiles](https://github.com/samuelcolvin/watchfiles) - Fast file watching
+- [questionary](https://github.com/tmbo/questionary) - Interactive prompts
+- [Jinja2](https://jinja.palletsprojects.com/) - Template engine
 
 ---
 

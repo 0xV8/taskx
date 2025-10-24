@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set
 
 from rich.console import Console
-from watchfiles import Change, awatch
+from watchfiles import awatch
 
 from taskx.core.task import Task
 
@@ -62,7 +62,7 @@ class FileWatcher:
         """
         watch_dir = Path(cwd) if cwd else Path.cwd()
 
-        self.console.print(f"[cyan]👀 Watching for changes...[/cyan]")
+        self.console.print("[cyan]👀 Watching for changes...[/cyan]")
         self.console.print(f"[dim]Directory: {watch_dir}[/dim]")
         self.console.print(f"[dim]Patterns: {', '.join(self.patterns)}[/dim]")
         self.console.print()

@@ -99,7 +99,7 @@ class DependencyResolver:
         for task_name in self.tasks:
             try:
                 self.resolve_dependencies(task_name)
-            except CircularDependencyError as e:
+            except CircularDependencyError:
                 # Extract cycle from error message if possible
                 circles.append([task_name])
 

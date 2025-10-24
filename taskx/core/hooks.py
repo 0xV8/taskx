@@ -4,7 +4,6 @@ Hook execution system for taskx.
 Handles pre/post/error/success hooks.
 """
 
-import subprocess
 from typing import Optional
 
 from rich.console import Console

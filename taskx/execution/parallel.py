@@ -18,7 +18,7 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from taskx.core.task import ExecutionResult, Task
+from taskx.core.task import ExecutionResult
 from taskx.utils.secure_exec import SecureCommandExecutor, SecurityError
 
 

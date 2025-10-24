@@ -5,7 +5,6 @@ Tests for file watcher and watch mode functionality.
 import asyncio
 import time
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 

@@ -52,10 +52,12 @@ class TestConfig:
     def test_parse_simple_task(self, temp_dir):
         """Test parsing simple string task."""
         config_file = temp_dir / "pyproject.toml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 [tool.taskx.tasks]
 simple = "echo 'hello'"
-""")
+"""
+        )
         config = Config(config_file)
         config.load()
 
@@ -66,11 +68,13 @@ simple = "echo 'hello'"
     def test_parse_complex_task(self, temp_dir):
         """Test parsing complex task definition."""
         config_file = temp_dir / "pyproject.toml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 [tool.taskx.tasks]
 lint = { cmd = "ruff check .", description = "Lint code" }
 complex = { cmd = "pytest", description = "Run tests", depends = ["lint"] }
-""")
+"""
+        )
         config = Config(config_file)
         config.load()
 
@@ -88,10 +92,12 @@ complex = { cmd = "pytest", description = "Run tests", depends = ["lint"] }
     def test_no_taskx_section(self, temp_dir):
         """Test error when no [tool.taskx] section."""
         config_file = temp_dir / "pyproject.toml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 [project]
 name = "test"
-""")
+"""
+        )
         config = Config(config_file)
         with pytest.raises(ConfigError, match="No \\[tool.taskx\\] section"):
             config.load()
@@ -99,10 +105,12 @@ name = "test"
     def test_no_tasks_defined(self, temp_dir):
         """Test error when no tasks defined."""
         config_file = temp_dir / "pyproject.toml"
-        config_file.write_text("""
+        config_file.write_text(
+            """
 [tool.taskx.env]
 FOO = "bar"
-""")
+"""
+        )
         config = Config(config_file)
         with pytest.raises(ConfigError, match="No tasks defined"):
             config.load()

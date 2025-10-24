@@ -5,7 +5,7 @@ Provides file watching and auto-restart functionality for tasks.
 """
 
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 import click
 from rich.console import Console
@@ -18,7 +18,12 @@ from taskx.execution.watcher import watch_task_sync
 @click.command()
 @click.argument("task_name")
 @click.option("--env", "-e", multiple=True, help="Environment variable overrides (KEY=VALUE)")
-@click.option("--pattern", "-p", multiple=True, help="Additional file patterns to watch (overrides task patterns)")
+@click.option(
+    "--pattern",
+    "-p",
+    multiple=True,
+    help="Additional file patterns to watch (overrides task patterns)",
+)
 @click.pass_context
 def watch(
     ctx: click.Context,
@@ -80,7 +85,7 @@ def watch(
     if not watch_patterns:
         console.print(f"[red]✗ Task '{task_name}' has no watch patterns defined[/red]")
         console.print("[yellow]Hint: Add watch patterns to your task definition:[/yellow]")
-        console.print(f"[dim]  {task_name} = {{ cmd = \"...\", watch = [\"*.py\", \"*.toml\"] }}[/dim]")
+        console.print(f'[dim]  {task_name} = {{ cmd = "...", watch = ["*.py", "*.toml"] }}[/dim]')
         ctx.exit(1)
 
     # Create execution callback

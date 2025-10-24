@@ -4,7 +4,7 @@ taskx - Modern Python Task Runner
 A task runner that combines the simplicity of npm scripts with the power of Make.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Vipin"
 __all__ = ["__version__", "run_task", "load_config", "list_tasks"]
 
